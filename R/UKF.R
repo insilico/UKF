@@ -1,11 +1,11 @@
 #=====================================================#
 #' UKF_dT
 #' Unscented Kalman Filter (UKF) for time step dT
-#' Doesn't use data yet. UKF_blend fn blends after dT.
+#' Doesn't use data at this step;
+#' UKF_blend fn blends UKF with data after dT step.
 #' This function was known previously as
 #' multiple_param_unscented_kalman_filter.
-#' Input: t_dummy,ode_model,xhat,Pxx,y,dq,dy,R,dt,dT
-#' @param t_dummy a dummy time variable, because ode models don't have explcit time 
+#' @param t_dummy a dummy time variable, because ode models don't have explcit time
 #' @param ode_model model with variables y and dq parameters
 #' @param xhat UFK prediction of augmented states (param + ind vars)
 #' @param Pxx augmented covariance matrix for sigma points
@@ -15,7 +15,7 @@
 #' @param R covariance matrix of y state. initialized in UKF_blend and updated with sigma points as Pyy in current function.
 #' @param dt smaller time step size within dT
 #' @param dT time step size that comes from time series data step
-#' @return list: xhat (augmented Kalman update), Pxx (augmented covariance at sigma points), and K (Kalman gain matrix) 
+#' @return list: xhat (augmented Kalman update), Pxx (augmented covariance at sigma points), and K (Kalman gain matrix)
 #' @examples
 #' Example
 #' @export
@@ -24,17 +24,17 @@ UKF_dT <- function(t_dummy,ode_model,xhat,Pxx,y,dq,dy,R,dt,dT){
     N_sigma <- 2*dx # number sigma points
     xsigma <- t(chol(dx*Pxx, pivot=T))
     # Unscented Sigma Points
-    Xa <- xhat %*% 
-      matrix(rep(1,length=N_sigma),nrow=1,ncol=N_sigma) +   
+    Xa <- xhat %*%
+      matrix(rep(1,length=N_sigma),nrow=1,ncol=N_sigma) +
       cbind(xsigma,-xsigma)
-    
+
     #X <- kura_ode_model(t,dq,Xa,dT)
     X <- propagate_model(t_dummy,ode_model,dt,dT,dq,Xa)
     xtilde <- t(t(rowSums(X))/N_sigma)
-    
+
     Pxx <- matrix(rep(0,length=dx*dx),nrow=dx,ncol=dx)
     for(i in 1:N_sigma){
-      Pxx <- Pxx + ((X[,i] - xtilde) %*% 
+      Pxx <- Pxx + ((X[,i] - xtilde) %*%
                       t(X[,i] - xtilde))/N_sigma
     }
     # grab first dy ind vars
@@ -42,33 +42,33 @@ UKF_dT <- function(t_dummy,ode_model,xhat,Pxx,y,dq,dy,R,dt,dT){
     # previously used multiple_param_obs_fct
     Y <- X[(dq+1):(dq+dy),]
     ytilde <- t(t(rowSums(Y))/N_sigma)
-    
+
     Pyy <- R
     for(i in 1:N_sigma){
-      Pyy <- Pyy + ((Y[,i] - ytilde) %*% 
+      Pyy <- Pyy + ((Y[,i] - ytilde) %*%
                       t(Y[,i] - ytilde))/N_sigma
     }
-    
+
     Pxy <- matrix(rep(0,length = dx*dy),nrow=dx,ncol=dy)
     for(i in 1:N_sigma){
-      Pxy <- Pxy + ((X[,i] - xtilde) %*% 
+      Pxy <- Pxy + ((X[,i] - xtilde) %*%
                       t(Y[,i] - ytilde))/N_sigma
     }
     K <- Pxy %*% solve(Pyy)  # Kalman Gain Matrix
-    
+
     xhat <- xtilde + K %*% (y - ytilde)
-    
+
     Pxx <- Pxx - K %*% t(Pxy)
-    
+
     # xhat is Kalman augmented predcition
     return(list(xhat = xhat, Pxx = Pxx, K = K))
   } # ENDFN UKF
 
 #' propagate_model
 #' Used inside UKF_dT, previously named kura_ode_model
-#' Take the ode model and current augmented state 
+#' Take the ode model and current augmented state
 #' and propagate ind vars to next dT using runge-kutta
-#' @param t dummy time variable, because ode models don't have explcit time in our examples 
+#' @param t dummy time variable, because ode models don't have explcit time in our examples
 #' @param ode_model model with ind vars y and dq parameters
 #' @param dt smaller time step size within dT
 #' @param dT time step size that comes from time series data step
@@ -97,23 +97,23 @@ propagate_model <- function(t,ode_model,dt,dT,dq,x){
 
 #=====================================================#
 #' UKF_blend
-#' Apply UKF_dT to all time points in ts_data, which is 
+#' Apply UKF_dT to all time points in ts_data, which is
 #' multi-dimensional time-series, where time is the first
-#' column of ts_data. Orignal data file is in rows, but we 
+#' column of ts_data. Orignal data file is in rows, but we
 #' transpose before the call of UKF_blend.
-#' Data should have dy+1 cols, dy is num ind vars. 
+#' Data should have dy+1 cols, dy is num ind vars.
 #' Blends UKF_dT with ts_data at each dT.
-#' Updates state y and the dq ode_model parameters. 
-#' Returns chi-square error output, which can be used 
+#' Updates state y and the dq ode_model parameters.
+#' Returns chi-square error output, which can be used
 #' as objective function for additional ode_model param
 #' optimization. iterative_param_optim and optim_param fns.
-#' UKF_blend only steps through time series one time. 
-#' Iterating UKF_blend with parameters from previous run can 
-#' improve parameter estimates. Iteration of UKF is what 
-#' iterative_param_optim does. 
+#' UKF_blend only steps through time series one time.
+#' Iterating UKF_blend with parameters from previous run can
+#' improve parameter estimates. Iteration of UKF is what
+#' iterative_param_optim does.
 #' Note: scalar coefficients for Q and R are hard-coded
 #' This function was known previously as myUKFkura.
-#' @param t_dummy a dummy time variable, because ode models don't have explcit time 
+#' @param t_dummy a dummy time variable, because ode models don't have explcit time
 #' @param ts_data panel of time series data. First column holds time values, other dy columns hold variable values
 #' @param ode_model model function with ind variables y and dq parameters
 #' @param dq number of unknown model params
@@ -121,9 +121,9 @@ propagate_model <- function(t,ode_model,dt,dT,dq,x){
 #' @param param_guess vector of length dq with initial guess for ode_model parameters
 #' @param dt smaller time step size within dT for solving ode
 #' @param dT time step size that comes from time series data step
-#' @param R_scale related to standard deviation of Gaussian measurement noise of ind variables. A number that must be specified by user. 
+#' @param R_scale related to standard deviation of Gaussian measurement noise of ind variables. A number that must be specified by user.
 #' @param Q_scale related to standard deviation of process noise. Noise related to model parameters. User choice. Can it be 0?
-#' @return list: param_est (dq model parameter estiamtes after run through time series), xhat (augmented Kalman update), error (error from Pxx augmented covariance at sigma points), and chisq (chi-square goodness of fit of prediction to data) 
+#' @return list: param_est (dq model parameter estiamtes after run through time series), xhat (augmented Kalman update), error (error from Pxx augmented covariance at sigma points), and chisq (chi-square goodness of fit of prediction to data)
 #' @examples
 #' Example
 #' @export
@@ -144,22 +144,22 @@ UKF_blend <- function(t_dummy,ts_data,ode_model,dq,dy,param_guess,dt,dT,R_scale=
   for(i in 1:num_time){
     Ks[[i]] <- matrix(rep(0,length=dx*dy),nrow=dx,ncol=dy)
   }
-  
+
   # intialize x augmented
   # z stacked on top of y
   # z is param guess repeated for all time points
-  z <- t(t(param_guess)) %*% 
+  z <- t(t(param_guess)) %*%
     matrix(rep(1,length=num_time),nrow=1,ncol=num_time)
   # y0 is intial y unaugmented state
-  # transpose makes each column y values that's num_time wide 
-  y0 <- t(ts_data[,-1])  
+  # transpose makes each column y values that's num_time wide
+  y0 <- t(ts_data[,-1])
   # 2nd and 3rd cols of dat, first col (-1 remove) is time
   # x columns are intial augmented states
   x <- rbind(z,y0) # stack
   xhat[,1] <- x[,1]  # right now xhat is all data
   #Q <- 0.015
   #                [grab y rows from x augmented]
-  R <- (R_scale)^2*cov(t(x[(dq+1):(dy+dq),])) # only y 
+  R <- (R_scale)^2*cov(t(x[(dq+1):(dy+dq),])) # only y
   Pxx[[1]] <- pracma::blkdiag(Q_scale*diag(dq),R)
   #max_steps <- 300
   #steps <- 0
@@ -173,22 +173,22 @@ UKF_blend <- function(t_dummy,ts_data,ode_model,dq,dy,param_guess,dt,dT,R_scale=
     #xhat[,1] <- x[,1]
     set.seed(1)
     #    grabbing y from x augmented
-    y <- x[(dq+1):(dy+dq),] + 
+    y <- x[(dq+1):(dy+dq),] +
       (pracma::sqrtm(R)$B) %*%  # adding noise
       matrix(rnorm(2*num_time),nrow=2,ncol=num_time)
-    
-    # Create intial dummy UKF_kstep as a default value 
-    # because cholesky, and hence UKF_dT in for-loop, 
+
+    # Create intial dummy UKF_kstep as a default value
+    # because cholesky, and hence UKF_dT in for-loop,
     # sometimes fail
-    UKF_kstep <- list(xhat = xhat[,1], 
-                      Pxx = Pxx[[1]], 
+    UKF_kstep <- list(xhat = xhat[,1],
+                      Pxx = Pxx[[1]],
                       K = Ks[[1]])
     for(k in 2:num_time){
       #t_k <- time_points[k-1]
       # bam: added tryCatch because by chance chol will fail
       # due to input matrix being non positive definite.
       UKF_kstep <- tryCatch(
-        { 
+        {
           UKF_dT(t_dummy,ode_model,xhat[,k-1],Pxx[[k-1]],y[,k],
                  dq,dy,R,dt,dT)
         },
@@ -197,7 +197,7 @@ UKF_blend <- function(t_dummy,ts_data,ode_model,dq,dy,param_guess,dt,dT,R_scale=
           message("Here's the original error message:")
           message(cond)
           message("Skipping this iteration.")
-          return(UKF_kstep)  
+          return(UKF_kstep)
           # if error occurs, return previous out
         }
       ) # end tryCatch
@@ -205,9 +205,9 @@ UKF_blend <- function(t_dummy,ts_data,ode_model,dq,dy,param_guess,dt,dT,R_scale=
       Pxx[[k]] <- UKF_kstep$Pxx
       Ks[[k]] <- UKF_kstep$K
       errors[,k] <- sqrt(diag(Pxx[[k]]))
-      
+
     } # end application of UKF blend to all time points
-    
+
     #est <- t(xhat[(1:dq),num_time])
     # parameters at last time point
     param_estimated <- t(t(xhat[(1:dq),num_time]))
@@ -227,7 +227,7 @@ UKF_blend <- function(t_dummy,ts_data,ode_model,dq,dy,param_guess,dt,dT,R_scale=
   }
   chisq <- mean(chisq)
   error <- t(errors[(1:dq),num_time])
-  
+
   return(list(param_est=param_estimated,
               xhat=xhat,error=error,chisq=chisq))
 } # END FN UKF_blend
@@ -236,21 +236,21 @@ UKF_blend <- function(t_dummy,ts_data,ode_model,dq,dy,param_guess,dt,dT,R_scale=
 #' Uses pracma optimization methods for either Simulated
 #' Annealing or Nelder-Meade. Calls UKF_blend to apply UKF
 #' to time series data and model to update parameters and return
-#' chi-square goodness of fit for the objective function. 
+#' chi-square goodness of fit for the objective function.
 #' @param param_guess vector of length dq with initial guess for ode_model parameters
-#' @param method string to specify optimization method,"L-BFGS-B" or "SANN" 
+#' @param method string to specify optimization method,"L-BFGS-B" or "SANN"
 #' @param lower_lim lower bound of solution (L-BFGS only)
 #' @param upper_lim upper bound of solution (L-BFGS only)
 #' @param maxit maximum number of iterations (SANN only)
 #' @param temp annealing temperature
-#' @param t_dummy a dummy time variable, because ode models don't have explcit time 
+#' @param t_dummy a dummy time variable, because ode models don't have explcit time
 #' @param ts_data panel of time series data. First column holds time values, other dy columns hold variable values
 #' @param ode_model model function with ind variables y and dq parameters
 #' @param dq number of unknown model params
 #' @param dy number of ind variables
 #' @param dt smaller time step size within dT for solving ode
 #' @param dT time step size that comes from time series data step
-#' @return list: par (vector of dq optimized parameters) and value (final chi-square goodness of fit to time series) 
+#' @return list: par (vector of dq optimized parameters) and value (final chi-square goodness of fit to time series)
 #' @examples
 #' Example
 #' @export
@@ -260,7 +260,7 @@ optim_params <- function(param_guess,method="L-BFGS-B",
   # Optimize the model parameters
   # if method=L-BFGS-B
   #     lower/upper constraints used, no maxit
-  # if method=SANN, 
+  # if method=SANN,
   #      temp used, maxit used to stop run, no constraints
   # base stats OPTIM method, Nelder-Meade with
   # param_guess = c(0,0) for example
@@ -274,7 +274,7 @@ optim_params <- function(param_guess,method="L-BFGS-B",
   # opt$value # objective function value, chi-square
   chisq_objective <- function(par_vec){
     # objective function
-    # one full pass through the time series. 
+    # one full pass through the time series.
     ukf_obj <- UKF_blend(t_dummy,ts_data,
                        ode_model,
                        dq,dy,par_vec,dt,dT)
@@ -288,21 +288,21 @@ optim_params <- function(param_guess,method="L-BFGS-B",
   } else{
     # Broyden-Fletcher-Goldfarb-Shannon
     opt <- optim(param_guess,chisq_objective,method="L-BFGS-B",
-                 lower=lower_lim,upper=upper_lim)  
+                 lower=lower_lim,upper=upper_lim)
   }
   return(list(par=opt$par, value=opt$value))
   }
 
 #' iterative_param_optim
 #' Optimize the model parameters by iteratively running
-#' the UKF_blend through the time series data. 
+#' the UKF_blend through the time series data.
 #' In other words, repeated calls of UKF_blend to apply UKF
 #' to time series data and model to update parameters and return
 #' chi-square goodness of fit for the objective function.
 #' Convergence of the parameter vector between runs is the
-#' stopping criterion 
+#' stopping criterion
 #' @param param_guess vector of length dq with initial guess for ode_model parameters
-#' @param t_dummy a dummy time variable, because ode models don't have explcit time 
+#' @param t_dummy a dummy time variable, because ode models don't have explcit time
 #' @param ts_data panel of time series data. First column holds time values, other dy columns hold variable values
 #' @param ode_model model function with ind variables y and dq parameters
 #' @param dq number of unknown model params
@@ -311,7 +311,7 @@ optim_params <- function(param_guess,method="L-BFGS-B",
 #' @param dT time step size that comes from time series data step
 #' @param param_tol small tolerance for convergence of the parameters to be optimized
 #' @param MAXSTEPS max number of iterations through time series
-#' @return list: par (vector of dq optimized parameters) and value (final chi-square goodness of fit to time series) 
+#' @return list: par (vector of dq optimized parameters) and value (final chi-square goodness of fit to time series)
 #' @examples
 #' Example
 #' @export
