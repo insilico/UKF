@@ -7,9 +7,9 @@ Apply UKF_dT to all time points in ts_data, which is
 multi-dimensional time-series, where time is the first
 column of ts_data. Orignal data file is in rows, but we
 transpose before the call of UKF_blend.
-Data should have dy+1 cols, dy is num ind vars.
+Data should have N_y+1 cols, N_y is num ind vars.
 Blends UKF_dT with ts_data at each dT.
-Updates state y and the dq ode_model parameters.
+Updates state y and the N_p ode_model parameters.
 Returns chi-square error output, which can be used
 as objective function for additional ode_model param
 optimization. iterative_param_optim and optim_param fns.
@@ -24,8 +24,8 @@ UKF_blend(
   t_dummy,
   ts_data,
   ode_model,
-  dq,
-  dy,
+  N_p,
+  N_y,
   param_guess,
   dt,
   dT,
@@ -36,15 +36,15 @@ UKF_blend(
 \arguments{
 \item{t_dummy}{a dummy time variable, because ode models don't have explcit time}
 
-\item{ts_data}{panel of time series data. First column holds time values, other dy columns hold variable values}
+\item{ts_data}{panel of time series data. First column holds time values, other N_y columns hold variable values}
 
-\item{ode_model}{model function with ind variables y and dq parameters}
+\item{ode_model}{model function with ind variables y and N_p parameters}
 
-\item{dq}{number of unknown model params}
+\item{N_p}{number of unknown model params}
 
-\item{dy}{number of ind variables}
+\item{N_y}{number of ind variables}
 
-\item{param_guess}{vector of length dq with initial guess for ode_model parameters}
+\item{param_guess}{vector of length N_p with initial guess for ode_model parameters}
 
 \item{dt}{smaller time step size within dT for solving ode}
 
@@ -55,7 +55,7 @@ UKF_blend(
 \item{Q_scale}{related to standard deviation of process noise. Noise related to model parameters. User choice. Can it be 0?}
 }
 \value{
-list: param_est (dq model parameter estiamtes after run through time series), xhat (augmented Kalman update), error (error from Pxx augmented covariance at sigma points), and chisq (chi-square goodness of fit of prediction to data)
+list: param_est (N_p model parameter estiamtes after run through time series), xhat (augmented Kalman update), error (error from Pxx augmented covariance at sigma points), and chisq (chi-square goodness of fit of prediction to data)
 }
 \description{
 UKF_blend
@@ -63,9 +63,9 @@ Apply UKF_dT to all time points in ts_data, which is
 multi-dimensional time-series, where time is the first
 column of ts_data. Orignal data file is in rows, but we
 transpose before the call of UKF_blend.
-Data should have dy+1 cols, dy is num ind vars.
+Data should have N_y+1 cols, N_y is num ind vars.
 Blends UKF_dT with ts_data at each dT.
-Updates state y and the dq ode_model parameters.
+Updates state y and the N_p ode_model parameters.
 Returns chi-square error output, which can be used
 as objective function for additional ode_model param
 optimization. iterative_param_optim and optim_param fns.

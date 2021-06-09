@@ -1,10 +1,18 @@
-# parameters to optimize in coupled_osc_model
+######################################
+# model_voxels_2param.R
+# example script for applying UKF
+# to a pair of voxel time series
+# and optimizing coupling parameters
+# for an ode model of synchronization
+######################################
+
+# parameters to optimize, p1 p2, in coupled_osc_model
 param_guess <- c(4,4)  # intial guess, oscillator coupling
 # script runs multiple optimization methods
 
 ########################
-# load fMRI voxel data 
-# smooth and make plots 
+# load fMRI voxel data
+# smooth and make plots
 ########################
 
 # first row is time, then voxel A and voxel B rows
@@ -15,7 +23,7 @@ vox.A.B.data <- t(vox.A.B.data)
 # show panel plot of each voxel with kernel smooth
 # return kernel smoothed data
 # plot_and_smooth.R
-smoothed_data <- plot_voxels_and_smooth(vox.A.B.data)  
+smoothed_data <- plot_voxels_and_smooth(vox.A.B.data)
 
 ############################
 # Set up Model Dimensions  #
@@ -27,11 +35,11 @@ dT <- t_vec[2]-t_vec[1]   # assume uniform time steps dT=1
 dt <- 0.1*dT
 #nn <- round(dT/dt)
 # num observed ind vars, first col is time, so -1
-dy <- ncol(vox.A.B.data)-1  # dy=2
+N_y <- ncol(vox.A.B.data)-1  # N_y=2
 # number of unknown model parameters to be estimated
-dq <- 2
+N_p <- 2
 # size of augmented state vector
-dx <- dq + dy
+N_x <- N_p + N_y
 
 ###########################
 # Specify Model Structure #
@@ -59,7 +67,7 @@ coupled_osc_model <- function(t,x,p){
 # One pass through the time series
 ###################################
 ukf_out <- UKF_blend(t_dummy,vox.A.B.data,coupled_osc_model,
-                     dq,dy,param_guess,dt,dT)
+                     N_p,N_y,param_guess,dt,dT)
 ukf_out$param_est
 ukf_out$chisq
 # function in plot_and_smooth.R
@@ -67,62 +75,62 @@ plot_ukf_and_smoothed(ukf_out, smoothed_data,
                       top_title='One UKF Step, Raw Data')
 
 #########################################
-# Run UKF with model and SMOOTHED data as input  
+# Run UKF with model and SMOOTHED data as input
 # One pass through the time series
 #########################################
 ukf_from_smooth <- UKF_blend(t_dummy,smoothed_data,
                              coupled_osc_model,
-                     dq,dy,param_guess,dt,dT)
+                     N_p,N_y,param_guess,dt,dT)
 ukf_from_smooth$param_est
 ukf_from_smooth$chisq
 plot_ukf_and_smoothed(ukf_from_smooth, smoothed_data,
                     top_title = 'One UKF Step, Smooth Data')
 
 #########################################
-# Simulated Annealing with smoothed data as input  
+# Simulated Annealing with smoothed data as input
 # to optimize model parameters, chisquare goodness of fit
 #########################################
-### Might want to make a separate UKF_blend that does not 
+### Might want to make a separate UKF_blend that does not
 ### change the parameters because the params get changed a lot
 ### and yet the chisquare is the same.
 ### Rugged fitness landscape?
 # Simulated Annealing, SANN ignores lower/upper limits
 opt <- optim_params(param_guess,method="SANN",
-                    lower_lim=-20,upper_lim=20, 
-                    maxit=500,temp=20, 
+                    lower_lim=-20,upper_lim=20,
+                    maxit=500,temp=20,
                     t_dummy,smoothed_data,coupled_osc_model,
-                    dq,dy,dt,dT)
+                    N_p,N_y,dt,dT)
 opt$par   # params
 opt$value # objective function value, chi-square
 # plug optim parameter back into UKF and plot
 # TODO: Make UKF_blend that just updates the y state,
 # not the parameters. A run through UKF_blend can drastically
-# change the guess parameters that were optimized, which 
-# makes you wonder about the fitness landscape. 
+# change the guess parameters that were optimized, which
+# makes you wonder about the fitness landscape.
 ukf_optimized <- UKF_blend(t_dummy,smoothed_data,
                            coupled_osc_model,
-                           dq,dy,opt$par,dt,dT)
+                           N_p,N_y,opt$par,dt,dT)
 ukf_optimized$param_est
 ukf_optimized$chisq
 plot_ukf_and_smoothed(ukf_optimized, smoothed_data,
                       top_title = 'Simulated Annealing')
 
 #########################################
-# Nelder-Mead with smoothed data as input  
+# Nelder-Mead with smoothed data as input
 # to optimize the parameter using UKF chisquare
 #########################################
 # L-BFGS-B, Nelder-Meade ignores maxit and temp
 opt2 <- optim_params(param_guess,method="L-BFGS-B",
-                    lower_lim=-20,upper_lim=20, 
-                    maxit=500,temp=20, 
+                    lower_lim=-20,upper_lim=20,
+                    maxit=500,temp=20,
                     t_dummy,smoothed_data,coupled_osc_model,
-                    dq,dy,dt,dT)
+                    N_p,N_y,dt,dT)
 opt2$par   # params
 opt2$value # objective function value, chi-square
 # plug optim parameter back into UKF and plot
 ukf_optimized <- UKF_blend(t_dummy,smoothed_data,
                            coupled_osc_model,
-                           dq,dy,opt2$par,dt,dT)
+                           N_p,N_y,opt2$par,dt,dT)
 ukf_optimized$param_est
 ukf_optimized$chisq
 plot_ukf_and_smoothed(ukf_optimized, smoothed_data,
@@ -131,12 +139,12 @@ plot_ukf_and_smoothed(ukf_optimized, smoothed_data,
 #########################################
 # Use the iterative approach to optimize params.
 # Convergence of parameters between iterations.
-# Run UKF model through smoothed data iteratively.  
+# Run UKF model through smoothed data iteratively.
 #########################################
-iter_opt <- iterative_param_optim(param_guess, 
+iter_opt <- iterative_param_optim(param_guess,
                       t_dummy, smoothed_data,
                       coupled_osc_model,
-                      dq,dy,dt,dT,
+                      N_p,N_y,dt,dT,
                       param_tol=.01,MAXSTEPS=30)
 iter_opt$par   # params
 iter_opt$value # chi-square
@@ -145,7 +153,7 @@ iter_opt$param_norm
 # plug iterative optim parameters back into UKF and plot
 ukf_iter_opt <- UKF_blend(t_dummy,smoothed_data,
                            coupled_osc_model,
-                           dq,dy,iter_opt$par,dt,dT)
+                           N_p,N_y,iter_opt$par,dt,dT)
 ukf_iter_opt$param_est
 ukf_iter_opt$chisq
 plot_ukf_and_smoothed(ukf_iter_opt, smoothed_data,

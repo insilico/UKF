@@ -4,27 +4,27 @@
 \alias{UKF_dT}
 \title{UKF_dT
 Unscented Kalman Filter (UKF) for time step dT
-Doesn't use data yet. UKF_blend fn blends after dT.
+Doesn't use data at this step;
+UKF_blend fn later blends UKF with data after dT step.
 This function was known previously as
-multiple_param_unscented_kalman_filter.
-Input: t_dummy,ode_model,xhat,Pxx,y,dq,dy,R,dt,dT}
+multiple_param_unscented_kalman_filter.}
 \usage{
-UKF_dT(t_dummy, ode_model, xhat, Pxx, y, dq, dy, R, dt, dT)
+UKF_dT(t_dummy, ode_model, xhat, Pxx, y, N_p, N_y, R, dt, dT)
 }
 \arguments{
 \item{t_dummy}{a dummy time variable, because ode models don't have explcit time}
 
-\item{ode_model}{model with variables y and dq parameters}
+\item{ode_model}{model with variables y and N_p parameters}
 
-\item{xhat}{UFK prediction of augmented states (param + ind vars)}
+\item{xhat}{UFK posterior prediction of augmented states (param + ind vars)}
 
 \item{Pxx}{augmented covariance matrix for sigma points}
 
 \item{y}{independent variable state vector}
 
-\item{dq}{number of unknown model params}
+\item{N_p}{number of unknown model params}
 
-\item{dy}{number of ind variables}
+\item{N_y}{number of ind variables}
 
 \item{R}{covariance matrix of y state. initialized in UKF_blend and updated with sigma points as Pyy in current function.}
 
@@ -38,10 +38,10 @@ list: xhat (augmented Kalman update), Pxx (augmented covariance at sigma points)
 \description{
 UKF_dT
 Unscented Kalman Filter (UKF) for time step dT
-Doesn't use data yet. UKF_blend fn blends after dT.
+Doesn't use data at this step;
+UKF_blend fn later blends UKF with data after dT step.
 This function was known previously as
 multiple_param_unscented_kalman_filter.
-Input: t_dummy,ode_model,xhat,Pxx,y,dq,dy,R,dt,dT
 }
 \examples{
 Example

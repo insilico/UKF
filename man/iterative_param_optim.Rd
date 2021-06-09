@@ -16,8 +16,8 @@ iterative_param_optim(
   t_dummy,
   ts_data,
   ode_model,
-  dq,
-  dy,
+  N_p,
+  N_y,
   dt,
   dT,
   param_tol = 0.01,
@@ -25,17 +25,17 @@ iterative_param_optim(
 )
 }
 \arguments{
-\item{param_guess}{vector of length dq with initial guess for ode_model parameters}
+\item{param_guess}{vector of length N_p with initial guess for ode_model parameters}
 
 \item{t_dummy}{a dummy time variable, because ode models don't have explcit time}
 
-\item{ts_data}{panel of time series data. First column holds time values, other dy columns hold variable values}
+\item{ts_data}{panel of time series data. First column holds time values, other N_y columns hold variable values}
 
-\item{ode_model}{model function with ind variables y and dq parameters}
+\item{ode_model}{model function with ind variables y and N_p parameters}
 
-\item{dq}{number of unknown model params}
+\item{N_p}{number of unknown model params}
 
-\item{dy}{number of ind variables}
+\item{N_y}{number of ind variables}
 
 \item{dt}{smaller time step size within dT for solving ode}
 
@@ -46,7 +46,7 @@ iterative_param_optim(
 \item{MAXSTEPS}{max number of iterations through time series}
 }
 \value{
-list: par (vector of dq optimized parameters) and value (final chi-square goodness of fit to time series)
+list: par (vector of N_p optimized parameters) and value (final chi-square goodness of fit to time series)
 }
 \description{
 iterative_param_optim
