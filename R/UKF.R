@@ -279,10 +279,15 @@ optim_params <- function(param_guess,method="L-BFGS-B",
   #                     N_y,N_p,N_x,dt,dT)
   # opt$par   # params
   # opt$value # objective function value, chi-square
+
+  # Initialize ukf_obj as NULL in parent environment to store UKF_blend output
+  ukf_obj <- NULL
+  
   chisq_objective <- function(par_vec){
     # objective function
     # one full pass through the time series.
-    ukf_obj <- UKF_blend(t_dummy,ts_data,
+    # Assign the result of UKF_blend to ukf_obj in the parent environment
+    ukf_obj <<- UKF_blend(t_dummy,ts_data,
                        ode_model,
                        N_p,N_y,par_vec,dt,dT)
     return(ukf_obj$chisq)
@@ -297,9 +302,9 @@ optim_params <- function(param_guess,method="L-BFGS-B",
     opt <- optim(param_guess,chisq_objective,method="L-BFGS-B",
                  lower=lower_lim,upper=upper_lim)
   }
-  # Modified the return parameters, xhat needs to be fixed
-  return(list(par=opt$par, value=opt$value, param_est=opt$par, xhat=opt$counts))
-  }
+  # Modified the return parameters, param_est and xhat added
+  return(list(par=opt$par, value=opt$value, param_est=opt$par, xhat=ukf_obj$xhat))
+}
 
 #' iterative_param_optim
 #' Optimize the model parameters by iteratively running
