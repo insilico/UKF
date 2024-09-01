@@ -136,13 +136,15 @@ UKF_blend <- function(t_dummy,ts_data,ode_model,N_p,N_y,param_guess,dt,dT,R_scal
   time_points <- ts_data[,1]
   num_time <- length(time_points)
   N_x <- N_p + N_y
-  xhat <- matrix(rep(0,length=4*num_time),nrow=N_x,ncol=num_time)
+  # Modified the length of xhat to be N_x*num_time
+  xhat <- matrix(rep(0,length=N_x*num_time),nrow=N_x,ncol=num_time)
   # intialize Pxx
   Pxx <- vector(mode = "list", length = num_time)
   for(i in 1:num_time){
     Pxx[[i]] <- matrix(rep(0,length=N_x*N_x),nrow=N_x,ncol=N_x)
   }
-  errors <- matrix(rep(0,length=4*num_time),
+  # Modified the length of errors to be N_x*num_time
+  errors <- matrix(rep(0,length=N_x*num_time),
                    nrow=N_x,ncol=num_time)
   # intialize Ks
   Ks <- vector(mode = "list", length = num_time)
@@ -277,10 +279,15 @@ optim_params <- function(param_guess,method="L-BFGS-B",
   #                     N_y,N_p,N_x,dt,dT)
   # opt$par   # params
   # opt$value # objective function value, chi-square
+
+  # Initialize ukf_obj as NULL in parent environment to store UKF_blend output
+  ukf_obj <- NULL
+  
   chisq_objective <- function(par_vec){
     # objective function
     # one full pass through the time series.
-    ukf_obj <- UKF_blend(t_dummy,ts_data,
+    # Assign the result of UKF_blend to ukf_obj in the parent environment
+    ukf_obj <<- UKF_blend(t_dummy,ts_data,
                        ode_model,
                        N_p,N_y,par_vec,dt,dT)
     return(ukf_obj$chisq)
@@ -295,8 +302,9 @@ optim_params <- function(param_guess,method="L-BFGS-B",
     opt <- optim(param_guess,chisq_objective,method="L-BFGS-B",
                  lower=lower_lim,upper=upper_lim)
   }
-  return(list(par=opt$par, value=opt$value))
-  }
+  # Modified the return parameters, param_est and xhat added
+  return(list(par=opt$par, value=opt$value, param_est=opt$par, xhat=ukf_obj$xhat))
+}
 
 #' iterative_param_optim
 #' Optimize the model parameters by iteratively running
@@ -337,6 +345,7 @@ iterative_param_optim <- function(param_guess,
       converged <- param_norm < param_tol
       done <- converged | steps >= MAXSTEPS
       }
+    # Modified the return parameters, param_est and xhat added
     return(list(par=param_new,value=ukf_run$chisq,
-                param_norm=param_norm,steps=steps))
+                param_norm=param_norm,steps=steps, param_est=param_new, xhat=ukf_run$xhat))
 }
