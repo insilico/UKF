@@ -110,6 +110,7 @@ plot_ukf_and_smoothed <- function(ukf_out, smoothed_data,
 #' @param smoothed_data Smoothed data.
 #' @param top_title Title for the plot.
 #' @return None
+#' @export
 plot_ukf_and_smoothed_ggplot <- function(ukf_out, smoothed_data, top_title="UKF estimate and kernel smooth"){
   # Modification for the number of parameters, previously it was used as ukf_out$xhat[3,]
   n_p <- length(ukf_out$param_est) + 1
@@ -148,6 +149,7 @@ plot_ukf_and_smoothed_ggplot <- function(ukf_out, smoothed_data, top_title="UKF 
 #' Also returns the smoothed data for later use.
 #' @param voxel_input three columns: column 1 = time, column 2 = voxel 1 signal, column 3 = voxel 2 signal
 #' @return matrix: same shape as input data but kernel smoothed
+#' @export
 plot_voxels_and_smooth_ggplot <- function(voxel_input){
   voxel_Time <- voxel_input[,1]
   voxel_data <- cbind(voxel_Time,voxel_input[,2], voxel_input[,3])
