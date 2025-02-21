@@ -94,7 +94,7 @@ propagate_model <- function(t,ode_model,dt,dT,N_p,x){
     k2 <- dt*ode_model(t,y + k1/2,p)
     k3 <- dt*ode_model(t,y + k2/2,p)
     k4 <- dt*ode_model(t,y + k3,p)
-    y <- y + k1/6 + k2/ + k3/3 + k4/6
+    y <- y + k1/6 + k2/3 + k3/3 + k4/6
   }
   r <- rbind(x[(1:N_p),],y) # returns new augmented
   return(r)
