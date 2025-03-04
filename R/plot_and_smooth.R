@@ -48,13 +48,13 @@ plot_voxels_and_smooth <- function(voxel_input){
   ) # end tryCatch
   #h <- dpill(m_points, y1_obs)
   fit1 <- ksmooth(m_points, y1_obs, kernel="normal",
-                  bandwidth = h, n.points=176)
+                  bandwidth = h, n.points=n)
   #lines(fit1,col='red',lwd=2)
 
   #plot(m_points, y2_obs)
   h <- dpill(m_points, y2_obs)
   fit2 <- ksmooth(m_points, y2_obs, kernel="normal",
-                  bandwidth = h, n.points=176)
+                  bandwidth = h, n.points=n)
   #lines(fit2,col='red',lwd=2)
 
   y1_obs.processed <- fit1$y
@@ -168,9 +168,9 @@ plot_voxels_and_smooth_ggplot <- function(voxel_input){
     }
   ) # end tryCatch
   
-  fit1 <- ksmooth(m_points, y1_obs, kernel="normal",bandwidth = h, n.points=176)
+  fit1 <- ksmooth(m_points, y1_obs, kernel="normal",bandwidth = h, n.points=n)
   h <- dpill(m_points, y2_obs)
-  fit2 <- ksmooth(m_points, y2_obs, kernel="normal", bandwidth = h, n.points=176)
+  fit2 <- ksmooth(m_points, y2_obs, kernel="normal", bandwidth = h, n.points=n)
   y1_obs.processed <- fit1$y
   y2_obs.processed <- fit2$y
 
