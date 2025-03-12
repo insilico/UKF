@@ -9,7 +9,7 @@ UKF_blend fn later blends UKF with data after dT step.
 This function was known previously as
 multiple_param_unscented_kalman_filter.}
 \usage{
-UKF_dT(t_dummy, ode_model, xhat, Pxx, y, N_p, N_y, R, dt, dT)
+UKF_dT(t_dummy, ode_model, xhat, Pxx, y, N_p, N_y, R, dt, dT, forcePositive)
 }
 \arguments{
 \item{t_dummy}{a dummy time variable, because ode models don't have explcit time}
@@ -31,6 +31,8 @@ UKF_dT(t_dummy, ode_model, xhat, Pxx, y, N_p, N_y, R, dt, dT)
 \item{dt}{smaller time step size within dT}
 
 \item{dT}{time step size that comes from time series data step}
+
+\item{forcePositive}{logical, if TRUE, ensures all parameters stay positive}
 }
 \value{
 list: xhat (augmented Kalman update), Pxx (augmented covariance at sigma points), and K (Kalman gain matrix)
