@@ -20,11 +20,12 @@
 #' @param R covariance matrix of y state. initialized in UKF_blend and updated with sigma points as Pyy in current function.
 #' @param dt smaller time step size within dT
 #' @param dT time step size that comes from time series data step
+#' @param forcePositive logical, if TRUE, ensures all parameters stay positive
 #' @return list: xhat (augmented Kalman update), Pxx (augmented covariance at sigma points), and K (Kalman gain matrix)
 #' @examples
 #' Example
 #' @export
-UKF_dT <- function(t_dummy,ode_model,xhat,Pxx,y,N_p,N_y,R,dt,dT){
+UKF_dT <- function(t_dummy, ode_model, xhat, Pxx, y, N_p, N_y, R, dt, dT, forcePositive = FALSE) {
     N_x <- N_p + N_y # number of augmented states
     N_sigma <- 2*N_x # number sigma points
     xsigma <- t(chol(N_x*Pxx, pivot=T))
@@ -62,12 +63,17 @@ UKF_dT <- function(t_dummy,ode_model,xhat,Pxx,y,N_p,N_y,R,dt,dT){
     K <- Pxy %*% solve(Pyy)  # Kalman Gain Matrix
 
     xhat <- xtilde + K %*% (y - ytilde)
-
+    
+    if (forcePositive) {
+      param_min <- 1e-8  # Smallest allowed value for parameters
+      xhat[1:N_p] <- pmax(param_min, xhat[1:N_p])  # Ensure all parameters stay positive
+    }
+    
     Pxx <- Pxx - K %*% t(Pxy)
 
     # xhat is Kalman augmented predcition
     return(list(xhat = xhat, Pxx = Pxx, K = K))
-  } # ENDFN UKF
+} # ENDFN UKF
 
 #' propagate_model
 #' Used inside UKF_dT, previously named kura_ode_model
