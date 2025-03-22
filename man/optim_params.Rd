@@ -21,7 +21,8 @@ optim_params(
   N_p,
   N_y,
   dt,
-  dT
+  dT,
+  forcePositive = FALSE
 )
 }
 \arguments{
@@ -50,6 +51,8 @@ optim_params(
 \item{dt}{smaller time step size within dT for solving ode}
 
 \item{dT}{time step size that comes from time series data step}
+
+\item{forcePositive}{logical, if TRUE, ensures all parameters stay positive}
 }
 \value{
 list: par (vector of N_p optimized parameters) and value (final chi-square goodness of fit to time series)

@@ -21,7 +21,8 @@ iterative_param_optim(
   dt,
   dT,
   param_tol = 0.01,
-  MAXSTEPS = 30
+  MAXSTEPS = 30,
+  forcePositive = FALSE
 )
 }
 \arguments{
@@ -44,6 +45,8 @@ iterative_param_optim(
 \item{param_tol}{small tolerance for convergence of the parameters to be optimized}
 
 \item{MAXSTEPS}{max number of iterations through time series}
+
+\item{forcePositive}{logical, if TRUE, ensures all parameters stay positive}
 }
 \value{
 list: par (vector of N_p optimized parameters) and value (final chi-square goodness of fit to time series)

@@ -134,11 +134,12 @@ propagate_model <- function(t,ode_model,dt,dT,N_p,x){
 #' @param dT time step size that comes from time series data step
 #' @param R_scale related to standard deviation of Gaussian measurement noise of ind variables. A number that must be specified by user.
 #' @param Q_scale related to standard deviation of process noise. Noise related to model parameters. User choice. Can it be 0?
+#' @param forcePositive logical, if TRUE, ensures all parameters stay positive
 #' @return list: param_est (N_p model parameter estiamtes after run through time series), xhat (augmented Kalman update), error (error from Pxx augmented covariance at sigma points), and chisq (chi-square goodness of fit of prediction to data)
 #' @examples
 #' Example
 #' @export
-UKF_blend <- function(t_dummy,ts_data,ode_model,N_p,N_y,param_guess,dt,dT,R_scale=0.3,Q_scale=0.015){
+UKF_blend <- function(t_dummy,ts_data,ode_model,N_p,N_y,param_guess,dt,dT,R_scale=0.3,Q_scale=0.015,forcePositive = FALSE){
   time_points <- ts_data[,1]
   num_time <- length(time_points)
   N_x <- N_p + N_y
@@ -203,7 +204,7 @@ UKF_blend <- function(t_dummy,ts_data,ode_model,N_p,N_y,param_guess,dt,dT,R_scal
       UKF_kstep <- tryCatch(
         {
           UKF_dT(t_dummy,ode_model,xhat[,k-1],Pxx[[k-1]],y[,k],
-                 N_p,N_y,R,dt,dT)
+                 N_p,N_y,R,dt,dT,forcePositive=forcePositive)
         },
         error=function(cond) {
           message("By chance, matrix caused Cholesky to fail.")
@@ -263,13 +264,14 @@ UKF_blend <- function(t_dummy,ts_data,ode_model,N_p,N_y,param_guess,dt,dT,R_scal
 #' @param N_y number of ind variables
 #' @param dt smaller time step size within dT for solving ode
 #' @param dT time step size that comes from time series data step
+#' @param forcePositive logical, if TRUE, ensures all parameters stay positive
 #' @return list: par (vector of N_p optimized parameters) and value (final chi-square goodness of fit to time series)
 #' @examples
 #' Example
 #' @export
 optim_params <- function(param_guess,method="L-BFGS-B",
                          lower_lim,upper_lim,maxit,temp=20,
-                    t_dummy,ts_data,ode_model,N_p,N_y,dt,dT){
+                    t_dummy,ts_data,ode_model,N_p,N_y,dt,dT,forcePositive=FALSE){
   # Optimize the model parameters
   # if method=L-BFGS-B
   #     lower/upper constraints used, no maxit
@@ -295,7 +297,7 @@ optim_params <- function(param_guess,method="L-BFGS-B",
     # Assign the result of UKF_blend to ukf_obj in the parent environment
     ukf_obj <<- UKF_blend(t_dummy,ts_data,
                        ode_model,
-                       N_p,N_y,par_vec,dt,dT)
+                       N_p,N_y,par_vec,dt,dT,forcePositive = forcePositive)
     return(ukf_obj$chisq)
   }
   # from stats base library
@@ -330,6 +332,7 @@ optim_params <- function(param_guess,method="L-BFGS-B",
 #' @param dT time step size that comes from time series data step
 #' @param param_tol small tolerance for convergence of the parameters to be optimized
 #' @param MAXSTEPS max number of iterations through time series
+#' @param forcePositive logical, if TRUE, ensures all parameters stay positive
 #' @return list: par (vector of N_p optimized parameters) and value (final chi-square goodness of fit to time series)
 #' @examples
 #' Example
@@ -337,14 +340,14 @@ optim_params <- function(param_guess,method="L-BFGS-B",
 iterative_param_optim <- function(param_guess,
                                   t_dummy,ts_data,ode_model,
                                   N_p,N_y,dt,dT,
-                                  param_tol=.01,MAXSTEPS=30){
+                                  param_tol=.01,MAXSTEPS=30,forcePositive=FALSE){
     done <- F
     steps <- 0
     while (!done){
       # one run through whole time series
       ukf_run <- UKF_blend(t_dummy,ts_data,
                          ode_model,
-                         N_p,N_y,param_guess,dt,dT)
+                         N_p,N_y,param_guess,dt,dT,forcePositive = forcePositive)
       param_new <- ukf_run$param_est
       steps <- steps + 1
       param_norm <- abs(sum(param_new-param_guess))
