@@ -30,7 +30,8 @@ UKF_blend(
   dt,
   dT,
   R_scale = 0.3,
-  Q_scale = 0.015
+  Q_scale = 0.015,
+  forcePositive = FALSE
 )
 }
 \arguments{
@@ -53,6 +54,8 @@ UKF_blend(
 \item{R_scale}{related to standard deviation of Gaussian measurement noise of ind variables. A number that must be specified by user.}
 
 \item{Q_scale}{related to standard deviation of process noise. Noise related to model parameters. User choice. Can it be 0?}
+
+\item{forcePositive}{logical, if TRUE, ensures all parameters stay positive}
 }
 \value{
 list: param_est (N_p model parameter estiamtes after run through time series), xhat (augmented Kalman update), error (error from Pxx augmented covariance at sigma points), and chisq (chi-square goodness of fit of prediction to data)
