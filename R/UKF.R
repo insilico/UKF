@@ -338,23 +338,39 @@ optim_params <- function(param_guess,method="L-BFGS-B",
 #' Example
 #' @export
 iterative_param_optim <- function(param_guess,
-                                  t_dummy,ts_data,ode_model,
-                                  N_p,N_y,dt,dT,
-                                  param_tol=.01,MAXSTEPS=30,forcePositive=FALSE){
-    done <- F
-    steps <- 0
-    while (!done){
-      # one run through whole time series
-      ukf_run <- UKF_blend(t_dummy,ts_data,
+                                  t_dummy, ts_data, ode_model,
+                                  N_p, N_y, dt, dT,
+                                  param_tol = 0.01, MAXSTEPS = 30,
+                                  forcePositive = FALSE) {
+  done <- FALSE
+  steps <- 0
+  chisq_history <- numeric()  # Store chi-square values for each iteration
+
+  while (!done) {
+    # One run through whole time series
+    ukf_run <- UKF_blend(t_dummy, ts_data,
                          ode_model,
-                         N_p,N_y,param_guess,dt,dT,forcePositive = forcePositive)
-      param_new <- ukf_run$param_est
-      steps <- steps + 1
-      param_norm <- abs(sum(param_new-param_guess))
-      converged <- param_norm < param_tol
-      done <- converged | steps >= MAXSTEPS
-      }
-    # Modified the return parameters, param_est and xhat added
-    return(list(par=param_new,value=ukf_run$chisq,
-                param_norm=param_norm,steps=steps, param_est=param_new, xhat=ukf_run$xhat))
+                         N_p, N_y, param_guess, dt, dT, forcePositive = forcePositive)
+
+    param_new <- ukf_run$param_est
+    chisq_history <- c(chisq_history, ukf_run$chisq)  # Append chi-square
+
+    steps <- steps + 1
+    param_norm <- abs(sum(param_new - param_guess))
+    converged <- param_norm < param_tol
+    done <- converged | steps >= MAXSTEPS
+
+    param_guess <- param_new  # Update guess for next iteration
+  }
+
+  # Return includes full chi-square trace
+  return(list(
+    par = param_new,
+    value = ukf_run$chisq,
+    param_norm = param_norm,
+    steps = steps,
+    param_est = param_new,
+    xhat = ukf_run$xhat,
+    chisq = chisq_history  # NEW: chi-square over iterations
+  ))
 }

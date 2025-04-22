@@ -181,3 +181,39 @@ plot_voxels_and_smooth_ggplot <- function(voxel_input){
 
   return(smoothed_data)
 }
+
+#' plot_ukf_chi_square_loss
+#' Plot the chi-square loss from the UKF output.
+#' This function assumes that the UKF output contains a 'loss' or 'chi-square loss' component.
+#' @param ukf_output Output from the UKF function.
+#' @param title Title for the plot.
+#' @return None
+#' @export
+#' @examples
+#' Example
+plot_ukf_chi_square_loss <- function(ukf_output, title = "UKF Chi-Square Loss Over Time") {
+  if (is.null(ukf_output$chisq)) {
+    stop("The UKF output does not contain a 'loss' or 'chi-square loss' component.")
+  }
+
+  # Create a dataframe for plotting
+  loss_df <- data.frame(
+    Time = seq_along(ukf_output$chisq),
+    ChiSquareLoss = ukf_output$chisq
+  )
+
+  # Plot using ggplot2
+  library(ggplot2)
+  ggplot(loss_df, aes(x = Time, y = ChiSquareLoss)) +
+    geom_line(color = "#2C3E50", size = 1) +
+    labs(
+      title = title,
+      x = "Time Step",
+      y = expression(Chi^2~Loss)
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(hjust = 0.5),
+      axis.title = element_text(face = "bold")
+    )
+}
