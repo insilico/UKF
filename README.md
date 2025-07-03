@@ -81,52 +81,56 @@ The UKF operates in two main phases at each time step: prediction and update. He
    $$
    \chi_i^{(k|k-1)} = f_{\mathrm{RK4}}(\chi_i^{(k-1)})
    $$
+   
 
    - Compute the predicted state mean and covariance:
+
 
    $$
    \hat{\mathbf{x}}_{k|k-1} = \sum_{i} W_i^m \chi_i^{(k|k-1)}
    $$
+
    
    $$
    P_{k|k-1} = \sum_{i} W_i^c (\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})(\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})^\top
    $$
 
+
    - Map sigma points through the observation function:
 
-$$
-\mathbf{y}_i^{(k|k-1)} = h(\chi_i^{(k|k-1)})
-$$
+   $$
+   \mathbf{y}_i^{(k|k-1)} = h(\chi_i^{(k|k-1)})
+   $$
 
    - Compute the predicted measurement mean and covariance:
-
-$$
-\hat{\mathbf{y}}_{k|k-1} = \sum_{i} W_i^m \mathbf{y}_i^{(k|k-1)}
-$$
-
-$$
-S_k = \sum_{i} W_i^c (\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})(\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})^\top + R
-$$
+   
+   $$
+   \hat{\mathbf{y}}_{k|k-1} = \sum_{i} W_i^m \mathbf{y}_i^{(k|k-1)}
+   $$
+   
+   $$
+   S_k = \sum_{i} W_i^c (\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})(\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})^\top + R
+   $$
 
    - Compute the cross-covariance and Kalman gain:
-
-$$
-C_k = \sum_{i} W_i^c (\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})(\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})^\top
-$$
-
-$$
-K_k = C_k S_k^{-1}
-$$
+   
+   $$
+   C_k = \sum_{i} W_i^c (\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})(\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})^\top
+   $$
+   
+   $$
+   K_k = C_k S_k^{-1}
+   $$
 
    - Update the state and covariance using the actual measurement:
 
-$$
-\hat{\mathbf{x}}_k = \hat{\mathbf{x}}_{k|k-1} + K_k (\mathbf{y}_k - \hat{\mathbf{y}}_{k|k-1})
-$$
-
-$$
-P_k = P_{k|k-1} - K_k S_k K_k^\top
-$$
+   $$
+   \hat{\mathbf{x}}_k = \hat{\mathbf{x}}_{k|k-1} + K_k (\mathbf{y}_k - \hat{\mathbf{y}}_{k|k-1})
+   $$
+   
+   $$
+   P_k = P_{k|k-1} - K_k S_k K_k^\top
+   $$
 
    - Add process noise $Q$ to the parameter block of $P_k$.
 
