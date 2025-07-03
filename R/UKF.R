@@ -274,6 +274,7 @@ UKF_blend <- function(t_dummy, ts_data, ode_model, N_p, N_y,
 #' @param R_scale related to standard deviation of Gaussian measurement noise of ind variables. A number that must be specified by user.
 #' @param Q_scale related to standard deviation of process noise. Noise related to model parameters
 #' @param forcePositive logical, if TRUE, ensures all parameters stay positive
+#' @param seeded logical, if TRUE, sets seed for reproducibility
 #' @return list: par (vector of N_p optimized parameters) and value (final chi-square goodness of fit to time series)
 #' @examples
 #' Example
@@ -281,7 +282,7 @@ UKF_blend <- function(t_dummy, ts_data, ode_model, N_p, N_y,
 optim_params <- function(param_guess, method = "L-BFGS-B",
                         lower_lim, upper_lim, maxit, temp = 20,
                         t_dummy, ts_data, ode_model, N_p, N_y, dt, dT,
-                        R_scale, Q_scale, forcePositive = FALSE) {
+                        R_scale, Q_scale, forcePositive = FALSE, seeded = FALSE) {
   # Optimize the model parameters
   # if method=L-BFGS-B
   #     lower/upper constraints used, no maxit
@@ -300,14 +301,15 @@ optim_params <- function(param_guess, method = "L-BFGS-B",
 
   # Initialize ukf_obj as NULL in parent environment to store UKF_blend output
   ukf_obj <- NULL
-  
+
   chisq_objective <- function(par_vec){
     # objective function
     # one full pass through the time series.
     # Assign the result of UKF_blend to ukf_obj in the parent environment
     ukf_obj <<- UKF_blend(t_dummy, ts_data, ode_model,
                           N_p, N_y, par_vec, dt, dT,
-                          R_scale, Q_scale, forcePositive = forcePositive)
+                          R_scale, Q_scale, forcePositive = forcePositive,
+                          seeded = seeded)
     return(ukf_obj$chisq)
   }
   # from stats base library
@@ -347,6 +349,7 @@ optim_params <- function(param_guess, method = "L-BFGS-B",
 #' @param Q_scale related to standard deviation of process noise. Noise related to model parameters
 #' @param trace logical, if TRUE, returns the best step and chi-square value
 #' @param forcePositive logical, if TRUE, ensures all parameters stay positive
+#' @param seeded logical, if TRUE, sets seed for reproducibility
 #' @return list: par (vector of N_p optimized parameters) and value (final chi-square goodness of fit to time series)
 #' @examples
 #' Example
@@ -354,7 +357,7 @@ optim_params <- function(param_guess, method = "L-BFGS-B",
 iterative_param_optim <- function(param_guess, t_dummy, ts_data, ode_model,
                                   N_p, N_y, dt, dT, param_tol = 0.01, MAXSTEPS = 30,
                                   R_scale = 1, Q_scale = 1, trace = FALSE,
-                                  forcePositive = FALSE) {
+                                  forcePositive = FALSE, seeded = FALSE) {
   done <- FALSE
   steps <- 0
   chisq_history <- numeric()  # Store chi-square values for each iteration
@@ -368,7 +371,8 @@ iterative_param_optim <- function(param_guess, t_dummy, ts_data, ode_model,
     # One run through whole time series
     ukf_run <- UKF_blend(t_dummy, ts_data, ode_model,
                          N_p, N_y, param_guess, dt, dT,
-                         R_scale, Q_scale, forcePositive = forcePositive)
+                         R_scale, Q_scale, forcePositive = forcePositive,
+                         seeded = seeded)
 
     param_new <- ukf_run$param_est
     chisq_history <- c(chisq_history, ukf_run$chisq)  # Append chi-square
