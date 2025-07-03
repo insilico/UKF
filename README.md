@@ -50,7 +50,7 @@ The Unscented Kalman Filter operates recursively at each time step to estimate b
 
 2. **For each time step $k = 1, \ldots, N$:**
 
-   1. Generate $2L$ sigma points $\{\chi_i^{(k-1)}\}$ from $\hat{\mathbf{x}}_{k-1}$ and $P_{k-1}$, where $L$ is the dimension of the augmented state. The sigma points are chosen to capture the mean and covariance of the state distribution.
+   1. Generate $2L$ sigma points $\{\chi_i^{(k-1)}\}$ from $\hat{\mathbf{x}}_{k-1}$ and $ P_{k-1} $, where $ L $ is the dimension of the augmented state. The sigma points are chosen to capture the mean and covariance of the state distribution.
 
    2. Propagate each sigma point forward using the nonlinear ODE model. In this implementation, propagation is performed using a Runge-Kutta 4th order (RK4) integrator, which provides a numerically stable and accurate way to advance both state and parameter estimates, even for stiff or highly nonlinear systems.
 
