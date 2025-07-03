@@ -83,12 +83,12 @@ $$
 $$
    
 
-   - Compute the predicted state mean and covariance:
-
-
-$$
-\hat{\mathbf{x}}_{k|k-1} = \sum_{i} W_i^m \chi_i^{(k|k-1)}
-$$
+   - Compute the predicted state mean and covariance: //
+   
+   
+   $$
+   \hat{\mathbf{x}}_{k|k-1} = \sum_{i} W_i^m \chi_i^{(k|k-1)}
+   $$
 
 
 $$
