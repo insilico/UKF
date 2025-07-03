@@ -46,7 +46,7 @@ Note: In this package, the state vector is augmented to include both the system 
 The UKF operates in two main phases at each time step: prediction and update. Here is a detailed breakdown of the code:
 
 1. Sigma Point Generation
-   - Given the current estimate of the augmented state mean $\hat{\mathbf{x}}{k}$ and covariance $P{k}$, generate $2L$ sigma points (where $L$ is the dimension of the augmented state).
+   - Given the current estimate of the augmented state mean $\hat{\mathbf{x}}{k-1}$ and covariance $P{k-1}$, generate $2L$ sigma points (where $L$ is the dimension of the augmented state).
    - The sigma points are chosen to capture the mean and covariance of the state distribution. 
 2. Propagation (Prediction Step)
    - Each sigma point is propagated through the nonlinear system dynamics.
