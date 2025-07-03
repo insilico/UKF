@@ -78,19 +78,19 @@ The UKF operates in two main phases at each time step: prediction and update. He
 
    - Propagate each sigma point forward using the ODE model and RK4 integration:
 
-$$
-\chi_i^{(k|k-1)} = f_{\mathrm{RK4}}(\chi_i^{(k-1)})
-$$
+   $$
+   \chi_i^{(k|k-1)} = f_{\mathrm{RK4}}(\chi_i^{(k-1)})
+   $$
 
    - Compute the predicted state mean and covariance:
 
-$$
-\hat{\mathbf{x}}_{k|k-1} = \sum_{i} W_i^m \chi_i^{(k|k-1)}
-$$
-
-$$
-P_{k|k-1} = \sum_{i} W_i^c (\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})(\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})^\top
-$$
+   $$
+   \hat{\mathbf{x}}_{k|k-1} = \sum_{i} W_i^m \chi_i^{(k|k-1)}
+   $$
+   
+   $$
+   P_{k|k-1} = \sum_{i} W_i^c (\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})(\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})^\top
+   $$
 
    - Map sigma points through the observation function:
 
