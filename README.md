@@ -50,15 +50,15 @@ The Unscented Kalman Filter operates recursively at each time step to estimate b
 
 2. **For each time step $k = 1, \ldots, N$:**
 
-   1. Generate $2L$ sigma points $\{\chi_i^{(k-1)}\}$ from $\hat{\mathbf{x}}_{k-1}$ and $P_{k-1}$, where $L$ is the dimension of the augmented state. The sigma points are chosen to capture the mean and covariance of the state distribution.
+- Generate $2L$ sigma points $\{\chi_i^{(k-1)}\}$ from $\hat{\mathbf{x}}_{k-1}$ and $P_{k-1}$, where $L$ is the dimension of the augmented state. The sigma points are chosen to capture the mean and covariance of the state distribution.
 
-   2. Propagate each sigma point forward using the nonlinear ODE model. In this implementation, propagation is performed using a Runge-Kutta 4th order (RK4) integrator, which provides a numerically stable and accurate way to advance both state and parameter estimates, even for stiff or highly nonlinear systems.
+- Propagate each sigma point forward using the nonlinear ODE model. In this implementation, propagation is performed using a Runge-Kutta 4th order (RK4) integrator, which provides a numerically stable and accurate way to advance both state and parameter estimates, even for stiff or highly nonlinear systems.
 
 $$
 \chi_i^{(k|k-1)} = f_{\mathrm{RK4}}(\chi_i^{(k-1)})
 $$
 
-   3. Compute the predicted state mean and covariance from the propagated sigma points.
+- Compute the predicted state mean and covariance from the propagated sigma points.
 
 $$
 \hat{\mathbf{x}}_{k|k-1} = \sum_{i} W_i^m \chi_i^{(k|k-1)}
@@ -68,13 +68,13 @@ $$
 P_{k|k-1} = \sum_{i} W_i^c (\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})(\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})^\top
 $$
 
-   4. Map the propagated sigma points through the observation function.
+- Map the propagated sigma points through the observation function.
 
 $$
 \mathbf{y}_i^{(k|k-1)} = h(\chi_i^{(k|k-1)})
 $$
 
-   Compute the predicted measurement mean and covariance.
+- Compute the predicted measurement mean and covariance.
 
 $$
 \hat{\mathbf{y}}_{k|k-1} = \sum_{i} W_i^m \mathbf{y}_i^{(k|k-1)}
@@ -84,7 +84,7 @@ $$
 S_k = \sum_{i} W_i^c (\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})(\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})^\top + R
 $$
 
-   5. Compute the cross-covariance and Kalman gain.
+- Compute the cross-covariance and Kalman gain.
 
 $$
 C_k = \sum_{i} W_i^c (\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})(\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})^\top
@@ -94,7 +94,7 @@ $$
 K_k = C_k S_k^{-1}
 $$
 
-   Update the state and covariance using the actual measurement.
+- Update the state and covariance using the actual measurement.
 
 $$
 \hat{\mathbf{x}}_k = \hat{\mathbf{x}}_{k|k-1} + K_k (\mathbf{y}_k - \hat{\mathbf{y}}_{k|k-1})
@@ -104,9 +104,9 @@ $$
 P_k = P_{k|k-1} - K_k S_k K_k^\top
 $$
 
-   6. Add process noise $Q$ to the parameter block of $P_k$ at each prediction step, allowing for uncertainty in parameter evolution. Measurement noise $R$ is used in the update step to account for observation uncertainty.
+- Add process noise $Q$ to the parameter block of $P_k$ at each prediction step, allowing for uncertainty in parameter evolution. Measurement noise $R$ is used in the update step to account for observation uncertainty.
 
-3. **Repeat** steps 2.1–2.6 for all time points $k$ in the data.
+3. **Repeat** for all time points $k$ in the data.
 
 ---
 
