@@ -22,6 +22,8 @@ optim_params(
   N_y,
   dt,
   dT,
+  R_scale,
+  Q_scale,
   forcePositive = FALSE
 )
 }
@@ -51,6 +53,10 @@ optim_params(
 \item{dt}{smaller time step size within dT for solving ode}
 
 \item{dT}{time step size that comes from time series data step}
+
+\item{R_scale}{related to standard deviation of Gaussian measurement noise of ind variables. A number that must be specified by user}
+
+\item{Q_scale}{related to standard deviation of process noise. Noise related to model parameters. User choice. Can it be 0?}
 
 \item{forcePositive}{logical, if TRUE, ensures all parameters stay positive}
 }

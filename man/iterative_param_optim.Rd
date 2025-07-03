@@ -22,6 +22,9 @@ iterative_param_optim(
   dT,
   param_tol = 0.01,
   MAXSTEPS = 30,
+  R_scale = 0.3,
+  Q_scale = 0.015,
+  trace = FALSE,
   forcePositive = FALSE
 )
 }
@@ -45,6 +48,12 @@ iterative_param_optim(
 \item{param_tol}{small tolerance for convergence of the parameters to be optimized}
 
 \item{MAXSTEPS}{max number of iterations through time series}
+
+\item{R_scale}{related to standard deviation of Gaussian measurement noise of ind variables. A number that must be specified by user}
+
+\item{Q_scale}{related to standard deviation of process noise. Noise related to model parameters. User choice. Can it be 0?}
+
+\item{trace}{logical, if TRUE, prints out the current parameter vector and chi-square goodness of fit at each iteration}
 
 \item{forcePositive}{logical, if TRUE, ensures all parameters stay positive}
 }

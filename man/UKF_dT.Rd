@@ -9,7 +9,7 @@ UKF_blend fn later blends UKF with data after dT step.
 This function was known previously as
 multiple_param_unscented_kalman_filter.}
 \usage{
-UKF_dT(t_dummy, ode_model, xhat, Pxx, y, N_p, N_y, R, dt, dT, forcePositive)
+UKF_dT(t_dummy, ode_model, xhat, Pxx, y, N_p, N_y, R, dt, dT, R_scale, Q_scale, forcePositive)
 }
 \arguments{
 \item{t_dummy}{a dummy time variable, because ode models don't have explcit time}
@@ -31,6 +31,10 @@ UKF_dT(t_dummy, ode_model, xhat, Pxx, y, N_p, N_y, R, dt, dT, forcePositive)
 \item{dt}{smaller time step size within dT}
 
 \item{dT}{time step size that comes from time series data step}
+
+\item{R_scale}{related to standard deviation of Gaussian measurement noise of ind variables. A number that must be specified by user}
+
+\item{Q_scale}{related to standard deviation of process noise. Noise related to model parameters. User choice. Can it be 0?}
 
 \item{forcePositive}{logical, if TRUE, ensures all parameters stay positive}
 }
