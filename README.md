@@ -15,13 +15,17 @@ This package provides tools for:
 
 ---
 
-## Mathematical Background
+## Background
 
-Given a nonlinear dynamical system:
+The Unscented Kalman Filter (UKF) is a recursive Bayesian filter designed for nonlinear dynamical systems. It is particularly well-suited for systems where the state evolution and/or observation models are nonlinear, and it avoids the need for explicit Jacobian calculations required by the Extended Kalman Filter (EKF).
+
+*Nonlinear State-Space Model*
+
+The general discrete-time nonlinear state-space model is:
 
 $$
 \begin{aligned}
-\mathbf{x}_{k+1} &= f(\mathbf{x}_k, \mathbf{u}_k) + \mathbf{w}_k \\
+\mathbf{x}_{k+1} &= f(\mathbf{x}_k) + \mathbf{w}_k \\
 \mathbf{y}_k &= h(\mathbf{x}_k) + \mathbf{v}_k
 \end{aligned}
 $$
@@ -29,13 +33,67 @@ $$
 where:
 
 - $\mathbf{x}_k$ is the state vector at time $k$
-- $\mathbf{u}_k$ is the control input (if any)
 - $\mathbf{y}_k$ is the observation vector
-- $f(\cdot)$ and $h(\cdot)$ are nonlinear functions
-- $\mathbf{w}_k \sim \mathcal{N}(0, Q)$ is process noise
-- $\mathbf{v}_k \sim \mathcal{N}(0, R)$ is measurement noise
+- $f(\cdot)$ is the (possibly nonlinear) state transition function
+- $h(\cdot)$ is the (possibly nonlinear) observation function
+- $\mathbf{w}_k \sim \mathcal{N}(0, Q)$ is the process noise
+- $\mathbf{v}_k \sim \mathcal{N}(0, R)$ is the measurement noise
 
-In this package, the state vector is augmented to include both system states and unknown model parameters, allowing for simultaneous parameter and state estimation.
+Note: In this package, the state vector is augmented to include both the system states and unknown model parameters, allowing for simultaneous parameter and state estimation.
+
+### UKF Process
+
+The Unscented Kalman Filter operates recursively at each time step to estimate both states and parameters in nonlinear dynamical systems. The process consists of the following steps:
+
+1. **Initialization:**  
+   Set the initial augmented state $\hat{\mathbf{x}}_0$ and covariance $P_0$.
+
+2. **For each time step $k = 1, \ldots, N$:**
+   1. Generate $2L$ sigma points $\{\chi_i^{(k-1)}\}$ from $\hat{\mathbf{x}}_{k-1}$ and $P_{k-1}$, where $L$ is the dimension of the augmented state. The sigma points are chosen to capture the mean and covariance of the state distribution.
+
+   2. Propagate each sigma point forward using the nonlinear ODE model. In this implementation, propagation is performed using a Runge-Kutta 4th order (RK4) integrator, which provides a numerically stable and accurate way to advance both state and parameter estimates, even for stiff or highly nonlinear systems:
+      $$
+      \chi_i^{(k|k-1)} = f_{\mathrm{RK4}}(\chi_i^{(k-1)})
+      $$
+
+   3. Compute the predicted state mean and covariance from the propagated sigma points:
+      $$
+      \hat{\mathbf{x}}_{k|k-1} = \sum_{i} W_i^m \chi_i^{(k|k-1)}
+      $$
+      $$
+      P_{k|k-1} = \sum_{i} W_i^c (\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})(\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})^\top
+      $$
+
+   4. Map the propagated sigma points through the observation function:
+      $$
+      \mathbf{y}_i^{(k|k-1)} = h(\chi_i^{(k|k-1)})
+      $$
+      - Compute the predicted measurement mean and covariance:
+      $$
+      \hat{\mathbf{y}}_{k|k-1} = \sum_{i} W_i^m \mathbf{y}_i^{(k|k-1)}
+      $$
+      $$
+      S_k = \sum_{i} W_i^c (\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})(\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})^\top + R
+      $$
+
+   5. Compute the cross-covariance and Kalman gain:
+      $$
+      C_k = \sum_{i} W_i^c (\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})(\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})^\top
+      $$
+      $$
+      K_k = C_k S_k^{-1}
+      $$
+      - Update the state and covariance using the actual measurement:
+      $$
+      \hat{\mathbf{x}}_k = \hat{\mathbf{x}}_{k|k-1} + K_k (\mathbf{y}_k - \hat{\mathbf{y}}_{k|k-1})
+      $$
+      $$
+      P_k = P_{k|k-1} - K_k S_k K_k^\top
+      $$
+
+   6. Add process noise $Q$ to the parameter block of $P_k$ at each prediction step, allowing for uncertainty in parameter evolution. Measurement noise $R$ is used in the update step to account for observation uncertainty.
+
+3. **Repeat** steps 2.1–2.6 for all time points $k$ in the data.
 
 ---
 
