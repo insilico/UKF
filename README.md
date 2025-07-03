@@ -68,6 +68,70 @@ The UKF operates in two main phases at each time step: prediction and update. He
    - Process noise ($Q$): Added to the parameter block of the covariance matrix at each prediction step, allowing for uncertainty in parameter evolution.
    - Measurement noise ($R$): Used in the update step to account for observation uncertainty.
 
+### Algorithm
+
+1. Initialize the augmented state $\hat{\mathbf{x}}_0$ and covariance $P_0$.
+
+2. For each time step $k = 1, \ldots, N$:
+
+   - Generate $2L$ sigma points $\{\chi_i^{(k-1)}\}$ from $\hat{\mathbf{x}}_{k-1}$ and $P_{k-1}$, where $L$ is the dimension of the augmented state.
+
+   - Propagate each sigma point forward using the ODE model and RK4 integration:
+
+$$
+\chi_i^{(k|k-1)} = f_{\mathrm{RK4}}(\chi_i^{(k-1)})
+$$
+
+   - Compute the predicted state mean and covariance:
+
+$$
+\hat{\mathbf{x}}_{k|k-1} = \sum_{i} W_i^m \chi_i^{(k|k-1)}
+$$
+
+$$
+P_{k|k-1} = \sum_{i} W_i^c (\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})(\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})^\top
+$$
+
+   - Map sigma points through the observation function:
+
+$$
+\mathbf{y}_i^{(k|k-1)} = h(\chi_i^{(k|k-1)})
+$$
+
+   - Compute the predicted measurement mean and covariance:
+
+$$
+\hat{\mathbf{y}}_{k|k-1} = \sum_{i} W_i^m \mathbf{y}_i^{(k|k-1)}
+$$
+
+$$
+S_k = \sum_{i} W_i^c (\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})(\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})^\top + R
+$$
+
+   - Compute the cross-covariance and Kalman gain:
+
+$$
+C_k = \sum_{i} W_i^c (\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})(\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})^\top
+$$
+
+$$
+K_k = C_k S_k^{-1}
+$$
+
+   - Update the state and covariance using the actual measurement:
+
+$$
+\hat{\mathbf{x}}_k = \hat{\mathbf{x}}_{k|k-1} + K_k (\mathbf{y}_k - \hat{\mathbf{y}}_{k|k-1})
+$$
+
+$$
+P_k = P_{k|k-1} - K_k S_k K_k^\top
+$$
+
+   - Add process noise $Q$ to the parameter block of $P_k$.
+
+3. Repeat for all time points $k$
+
 ---
 
 ## Installation
