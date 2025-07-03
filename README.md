@@ -43,70 +43,74 @@ Note: In this package, the state vector is augmented to include both the system 
 
 ### UKF Process
 
-The Unscented Kalman Filter operates recursively at each time step to estimate both states and parameters in nonlinear dynamical systems. The process consists of the following steps:
+The UKF operates in two main phases at each time step: prediction and update. Here is a detailed breakdown of the code:
 
-1. **Initialization:**  
-   Set the initial augmented state $\hat{\mathbf{x}}_0$ and covariance $P_0$.
+1. Sigma Point Generation
+   - Given the current estimate of the augmented state mean $\hat{\mathbf{x}}{k}$ and covariance $P{k}$, generate $2L$ sigma points (where $L$ is the dimension of the augmented state).
+   - The sigma points are chosen to capture the mean and covariance of the state distribution. 
+2. Propagation (Prediction Step)
+   - Each sigma point is propagated through the nonlinear system dynamics.
 
-2. **For each time step $k = 1, \ldots, N$:**
+   - In this implementation, this is done using a Runge-Kutta 4th order (RK4) integrator for the ODE model. This provides a numerically stable and accurate way to propagate the state and parameter estimates forward in time, even for stiff or highly nonlinear systems.
 
-- Generate $2L$ sigma points $\{\chi_i^{(k-1)}\}$ from $\hat{\mathbf{x}}_{k-1}$ and $P_{k-1}$, where $L$ is the dimension of the augmented state. The sigma points are chosen to capture the mean and covariance of the state distribution.
+   - The predicted mean and covariance are computed from the propagated sigma points.
 
-- Propagate each sigma point forward using the nonlinear ODE model. In this implementation, propagation is performed using a Runge-Kutta 4th order (RK4) integrator, which provides a numerically stable and accurate way to advance both state and parameter estimates, even for stiff or highly nonlinear systems.
+   - The use of the Runge-Kutta 4th order (RK4) method for propagating sigma points is a key feature of this implementation. RK4 is a widely used, robust numerical integrator for ODEs. It provides a good balance between accuracy and computational efficiency, making it suitable for the nonlinear ODEs encountered in biological and physical systems.
 
-$$
-\chi_i^{(k|k-1)} = f_{\mathrm{RK4}}(\chi_i^{(k-1)})
-$$
+3. Measurement Prediction
+   - The propagated sigma points are mapped through the observation function $h(\cdot)$ to predict the expected measurement for each sigma point.
+   - The predicted measurement mean and covariance are computed.
+4. Update (Correction Step)
+   - The cross-covariance between the state and measurement is computed.
+   - The Kalman gain is calculated, which determines how much the state estimate should be corrected based on the new measurement.
+   - The state mean and covariance are updated using the actual measurement.
+5. Process and Measurement Noise
+   - Process noise ($Q$): Added to the parameter block of the covariance matrix at each prediction step, allowing for uncertainty in parameter evolution.
+   - Measurement noise ($R$): Used in the update step to account for observation uncertainty.
 
-- Compute the predicted state mean and covariance from the propagated sigma points.
+### Algorithm
 
-$$
-\hat{\mathbf{x}}_{k|k-1} = \sum_{i} W_i^m \chi_i^{(k|k-1)}
-$$
-
-$$
-P_{k|k-1} = \sum_{i} W_i^c (\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})(\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})^\top
-$$
-
-- Map the propagated sigma points through the observation function.
-
-$$
-\mathbf{y}_i^{(k|k-1)} = h(\chi_i^{(k|k-1)})
-$$
-
-- Compute the predicted measurement mean and covariance.
-
-$$
-\hat{\mathbf{y}}_{k|k-1} = \sum_{i} W_i^m \mathbf{y}_i^{(k|k-1)}
-$$
-
-$$
-S_k = \sum_{i} W_i^c (\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})(\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})^\top + R
-$$
-
-- Compute the cross-covariance and Kalman gain.
-
-$$
-C_k = \sum_{i} W_i^c (\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})(\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})^\top
-$$
-
-$$
-K_k = C_k S_k^{-1}
-$$
-
-- Update the state and covariance using the actual measurement.
-
-$$
-\hat{\mathbf{x}}_k = \hat{\mathbf{x}}_{k|k-1} + K_k (\mathbf{y}_k - \hat{\mathbf{y}}_{k|k-1})
-$$
-
-$$
-P_k = P_{k|k-1} - K_k S_k K_k^\top
-$$
-
-- Add process noise $Q$ to the parameter block of $P_k$ at each prediction step, allowing for uncertainty in parameter evolution. Measurement noise $R$ is used in the update step to account for observation uncertainty.
-
-3. **Repeat** for all time points $k$ in the data.
+1. Initialize the augmented state $\hat{\mathbf{x}}_0$ and covariance $P_0$.
+2. For each time step $k = 1, \ldots, N$:
+   1. Generate $2L$ sigma points $\{\chi_i^{(k-1)}\}$ from $\hat{\mathbf{x}}_{k-1}$ and $P_{k-1}$, where $L$ is the dimension of the augmented state.
+   2. Propagate each sigma point forward using the ODE model and RK4 integration:
+      $$
+      \chi_i^{(k|k-1)} = f_{\mathrm{RK4}}(\chi_i^{(k-1)})
+      $$
+   3. Compute the predicted state mean and covariance:
+      $$
+      \hat{\mathbf{x}}_{k|k-1} = \sum_{i} W_i^m \chi_i^{(k|k-1)}
+      $$
+      $$
+      P_{k|k-1} = \sum_{i} W_i^c (\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})(\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})^\top
+      $$
+   4. Map sigma points through the observation function:
+      $$
+      \mathbf{y}_i^{(k|k-1)} = h(\chi_i^{(k|k-1)})
+      $$
+   5. Compute the predicted measurement mean and covariance:
+      $$
+      \hat{\mathbf{y}}_{k|k-1} = \sum_{i} W_i^m \mathbf{y}_i^{(k|k-1)}
+      $$
+      $$
+      S_k = \sum_{i} W_i^c (\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})(\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})^\top + R
+      $$
+   6. Compute the cross-covariance and Kalman gain:
+      $$
+      C_k = \sum_{i} W_i^c (\chi_i^{(k|k-1)} - \hat{\mathbf{x}}_{k|k-1})(\mathbf{y}_i^{(k|k-1)} - \hat{\mathbf{y}}_{k|k-1})^\top
+      $$
+      $$
+      K_k = C_k S_k^{-1}
+      $$
+   7. Update the state and covariance using the actual measurement:
+      $$
+      \hat{\mathbf{x}}_k = \hat{\mathbf{x}}_{k|k-1} + K_k (\mathbf{y}_k - \hat{\mathbf{y}}_{k|k-1})
+      $$
+      $$
+      P_k = P_{k|k-1} - K_k S_k K_k^\top
+      $$
+   8. Add process noise $Q$ to the parameter block of $P_k$.
+3. Repeat for all time points $k$ in the data.
 
 ---
 
