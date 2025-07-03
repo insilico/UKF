@@ -31,6 +31,7 @@ UKF_blend(
   dT,
   R_scale = 0.3,
   Q_scale = 0.015,
+  seeded = FALSE,
   forcePositive = FALSE
 )
 }
@@ -54,6 +55,8 @@ UKF_blend(
 \item{R_scale}{related to standard deviation of Gaussian measurement noise of ind variables. A number that must be specified by user.}
 
 \item{Q_scale}{related to standard deviation of process noise. Noise related to model parameters. User choice. Can it be 0?}
+
+\item{seeded}{logical, if TRUE, sets seed for reproducibility. Default is FALSE.}
 
 \item{forcePositive}{logical, if TRUE, ensures all parameters stay positive}
 }
